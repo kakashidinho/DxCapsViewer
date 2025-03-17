@@ -758,6 +758,21 @@ namespace
         auto dsm = static_cast<DWORD>(desc.DedicatedSystemMemory / (1024 * 1024));
         auto ssm = static_cast<DWORD>(desc.SharedSystemMemory / (1024 * 1024));
 
+        IDXGIAdapter4* adapter4;
+        bool monitoredFences = false;
+        bool nonMonitoredFences = false;
+        int flag3 = 0;
+        hr = pAdapter->QueryInterface(IID_PPV_ARGS(&adapter4));
+        if (SUCCEEDED(hr)) {
+            DXGI_ADAPTER_DESC3 desc3;
+            if (SUCCEEDED(adapter4->GetDesc3(&desc3))) {
+                flag3 = desc3.Flags;
+                monitoredFences = desc3.Flags & DXGI_ADAPTER_FLAG3_SUPPORT_MONITORED_FENCES;
+                nonMonitoredFences = desc3.Flags & DXGI_ADAPTER_FLAG3_SUPPORT_NON_MONITORED_FENCES;
+            }
+            adapter4->Release();
+        }
+
         char szDesc[128];
 
         wcstombs_s(nullptr, szDesc, desc.Description, 128);
@@ -819,6 +834,13 @@ namespace
 
             LVAddText(g_hwndLV, 0, "Compute Preemption Granularity");
             LVAddText(g_hwndLV, 1, cpg);
+
+            LVAddText(g_hwndLV, 0, "Monitored Fence Flag");
+            LVAddText(g_hwndLV, 1, "%d", monitoredFences);
+            LVAddText(g_hwndLV, 0, "Non Monitored Fence Flag");
+            LVAddText(g_hwndLV, 1, "%d", nonMonitoredFences);
+            LVAddText(g_hwndLV, 0, "Adapter Desc Flag3");
+            LVAddText(g_hwndLV, 1, "%x", flag3);
         }
         else
         {
@@ -833,6 +855,9 @@ namespace
             PrintStringValueLine("Remote", (desc.Flags & DXGI_ADAPTER_FLAG_REMOTE) ? c_szYes : c_szNo, pPrintInfo);
             PrintStringValueLine("Graphics Preemption Granularity", gpg, pPrintInfo);
             PrintStringValueLine("Compute Preemption Granularity", cpg, pPrintInfo);
+            PrintValueLine("Monitored Fence Flag", monitoredFences, pPrintInfo);
+            PrintValueLine("Non Monitored Fence Flag", nonMonitoredFences, pPrintInfo);
+            PrintValueLine("Adapter Desc Flag3", flag3, pPrintInfo);
         }
 
         return S_OK;
